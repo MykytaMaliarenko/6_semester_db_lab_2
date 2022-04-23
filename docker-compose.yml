@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data/
+
+  app:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+    depends_on:
+      - db
+    volumes:
+      - ./src:/usr/app/src
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+volumes:
+  db:
+    name: ${PROJECT_NAME}_db
