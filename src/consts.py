@@ -11,18 +11,17 @@ class TestStatus(Enum):
 
 
 class SubjectCodes(Enum):
-    UKRAINIAN_LANGUAGE_AND_LITERATURE = 'UML'
-    UKRAINIAN_LANGUAGE = 'Ukr'
-    PHYSICS = 'Phys'
-    MATH = 'Math'
+    UKRAINIAN_LANGUAGE_AND_LITERATURE = 'Ukr'
     HISTORY = 'His'
-    ENGLISH = 'Eng'
-    GEOGRAPHY = 'Geo'
+    MATH = 'Math'
+    PHYSICS = 'Phys'
     CHEMISTRY = 'Chem'
     BIOLOGY = 'Bio'
+    GEOGRAPHY = 'Geo'
+    ENGLISH = 'Eng'
     FRENCH = 'Fra'
     GERMAN = 'Deu'
-    SPAIN = 'Spa'
+    SPANISH = 'Spa'
 
 
 def generate_subject_fields(field_name: str, _type: t.Type) -> t.Dict:
