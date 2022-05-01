@@ -82,8 +82,15 @@ class AbstractModel:
         return self
 
     @classmethod
-    def bulk_create(cls, c: cursor, models: list['AbstractModel']):
+    def bulk_create(
+            cls, c: cursor,
+            models: list['AbstractModel'],
+            exclude_id=False
+    ):
         field_names = [field.name for field in fields(cls)]
+        if exclude_id:
+            field_names.pop(field_names.index('id'))
+
         sql_models_values: list[str] = []
         for model in models:
             sql_models_values.append(

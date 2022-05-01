@@ -23,6 +23,33 @@ class SubjectCodes(Enum):
     GERMAN = 'Deu'
     SPANISH = 'Spa'
 
+    @property
+    def name(self) -> str:
+        if self == SubjectCodes.UKRAINIAN_LANGUAGE_AND_LITERATURE:
+            return 'Українська мова і література'
+        elif self == SubjectCodes.HISTORY:
+            return 'Історія України'
+        elif self == SubjectCodes.MATH:
+            return 'Математика'
+        elif self == SubjectCodes.PHYSICS:
+            return 'Фізика'
+        elif self == SubjectCodes.CHEMISTRY:
+            return 'Хімія'
+        elif self == SubjectCodes.BIOLOGY:
+            return 'Біологія'
+        elif self == SubjectCodes.GEOGRAPHY:
+            return 'Географія'
+        elif self == SubjectCodes.ENGLISH:
+            return 'Англійська мова'
+        elif self == SubjectCodes.FRENCH:
+            return 'Французька мова'
+        elif self == SubjectCodes.GERMAN:
+            return 'Німецька мова'
+        elif self == SubjectCodes.SPANISH:
+            return 'Іспанська мова'
+        else:
+            return super(SubjectCodes, self).name
+
 
 def generate_subject_fields(field_name: str, _type: t.Type) -> t.Dict:
     return {f'{subject.value}{field_name}': _type for subject in SubjectCodes}

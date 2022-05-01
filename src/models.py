@@ -93,6 +93,10 @@ class Subject(AbstractModel):
     code: str
     name: str
 
+    META = ModelMeta(
+        table_name='subject'
+    )
+
 
 @dataclass
 class Student(AbstractModel):
