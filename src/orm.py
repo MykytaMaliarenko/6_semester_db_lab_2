@@ -81,6 +81,20 @@ class AbstractModel:
         self.id = _id
         return self
 
+    def update(self, c: cursor):
+        field_names = [field.name for field in fields(self)]
+        field_names.pop(field_names.index('id'))
+
+        sql_model_values = ",".join([
+            f"{field} = {self._sql_repr_value(getattr(self, field))}"
+            for field in field_names
+        ])
+
+        c.execute(
+            f'update {self.META.table_name} set {sql_model_values} '
+            f'where id = {self._sql_repr_value(self.id)}'
+        )
+
     @classmethod
     def bulk_create(
             cls, c: cursor,
