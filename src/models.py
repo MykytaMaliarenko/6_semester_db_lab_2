@@ -87,6 +87,34 @@ class EducationalInstitution(AbstractModel):
         table_name='educational_institution'
     )
 
+    @classmethod
+    def get_or_create(
+            cls,
+            c: cursor,
+            name: str,
+            _type: str,
+            place_id: int,
+            parent_body_name: t.Optional[str]
+    ) -> 'EducationalInstitution':
+        ei = cls.get_from_db(c, name=name, place_id=place_id)
+        if ei is None:
+            ei = EducationalInstitution(
+                id=None,
+                name=name,
+                place_id=place_id,
+                type=_type,
+                parent_body_name=parent_body_name
+            ).create(c)
+            return ei
+        else:
+            if (
+                    ei.type != _type or
+                    ei.parent_body_name != ei.parent_body_name
+            ):
+                ei.update(c)
+            return ei
+
+
 
 @dataclass
 class Subject(AbstractModel):
