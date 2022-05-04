@@ -9,7 +9,7 @@ steps = [
         CREATE TABLE educational_institution (
             id serial primary key, 
             name varchar(500) not null,
-            type varchar(500) not null,
+            type varchar(500),
             place_id integer not null, 
             parent_body_name varchar(500),
             CONSTRAINT fk_place_id

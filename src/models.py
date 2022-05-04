@@ -79,8 +79,8 @@ class Place(AbstractModel):
 @dataclass
 class EducationalInstitution(AbstractModel):
     name: str
-    type: str
     place_id: int
+    type: t.Optional[str]
     parent_body_name: t.Optional[str]
 
     META = ModelMeta(
@@ -92,9 +92,9 @@ class EducationalInstitution(AbstractModel):
             cls,
             c: cursor,
             name: str,
-            _type: str,
             place_id: int,
-            parent_body_name: t.Optional[str]
+            _type: t.Optional[str] = None,
+            parent_body_name: t.Optional[str] = None
     ) -> 'EducationalInstitution':
         ei = cls.get_from_db(c, name=name, place_id=place_id)
         if ei is None:
@@ -113,7 +113,6 @@ class EducationalInstitution(AbstractModel):
             ):
                 ei.update(c)
             return ei
-
 
 
 @dataclass
