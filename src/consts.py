@@ -12,7 +12,7 @@ class TestStatus(Enum):
 
 class SubjectCodes(Enum):
     UKRAINIAN_LANGUAGE_AND_LITERATURE = 'Ukr'
-    HISTORY = 'His'
+    HISTORY = 'Hist'
     MATH = 'Math'
     PHYSICS = 'Phys'
     CHEMISTRY = 'Chem'
