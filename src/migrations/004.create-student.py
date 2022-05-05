@@ -51,15 +51,13 @@ def transfer_student_data(conn: connection):
             territory_name
         )
 
-        return EducationalInstitution(
-            id=None,
+        return EducationalInstitution.get_or_create(
+            cursor,
             name=name,
-            type=_type,
             place_id=place.id,
+            _type=_type,
             parent_body_name=parent_body_name
-        ).create(cursor).id
-
-    logging.info('start')
+        ).id
 
     index = 0
     while True:
