@@ -10,13 +10,19 @@ __all__ = [
 
 BULK_UPLOAD_SIZE = 5000
 
+DB_NAME = environ.get('DB_NAME')
+DB_USER = environ.get('DB_USER')
+DB_PASSWORD = environ.get('DB_PASSWORD')
+DB_HOST = environ.get('DB_HOST')
+DB_PORT = '5432'
 DB_CONFIG = {
-    'dbname': environ.get('DB_NAME'),
-    'user': environ.get('DB_USER'),
-    'password': environ.get('DB_PASSWORD'),
-    'host': environ.get('DB_HOST'),
-    'port': environ.get('DB_PORT', '5432')
+    'dbname': DB_NAME,
+    'user': DB_USER,
+    'password': DB_PASSWORD,
+    'host': DB_HOST,
+    'port': DB_PORT
 }
+DB_CONNECTION_STING = f'postgres://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
 DATA_DIRECTORY = '../zno_data/'
 
