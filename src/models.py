@@ -147,9 +147,12 @@ class Exam(AbstractModel):
     student_id: str
     educational_institution_id: int
 
-    dpa_level: t.Optional[str]
-    adapt_scale: int
-
     raw_score: float
     score: float
     school_score: int
+
+    year: int
+
+    META = ModelMeta(
+        table_name='exam'
+    )
