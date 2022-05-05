@@ -3,6 +3,7 @@ import logging
 import time
 import psycopg2
 import config as conf
+from yoyo import read_migrations, get_backend
 from sql_utils import (
     generate_bulk_insert_row_sql, generate_data_schema_from_entry,
     generate_create_table_sql
@@ -51,6 +52,14 @@ def query_data(cursor, file_to_write: str):
 
 
 def main():
+    backend = get_backend(conf.DB_CONNECTION_STING)
+    migrations = read_migrations('./migrations')
+
+    logging.info('starting migrations...')
+    with backend.lock():
+        backend.apply_migrations(backend.to_apply(migrations))
+    logging.info('migrations are successful')
+
     file_to_generate_schema = conf.FILES_TO_PARSE[0]
     with open(
         file_to_generate_schema.path,
