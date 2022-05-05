@@ -152,6 +152,7 @@ class Exam(AbstractModel):
     school_score: int
 
     year: int
+    status: str
 
     META = ModelMeta(
         table_name='exam'

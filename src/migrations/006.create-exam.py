@@ -18,7 +18,8 @@ def transfer_exam_data(conn: connection):
             lambda f: f'{s.value}{f}',
             [
                 'ptname', 'ptregname', 'ptareaname',
-                'pttername', 'ball', 'ball100', 'ball12'
+                'pttername', 'ball', 'ball100', 'ball12',
+                'teststatus'
             ]
         ))
 
@@ -78,8 +79,9 @@ def transfer_exam_data(conn: connection):
             for j, subject in enumerate(subject_handling_order):
                 (
                     pt_name, pt_reg_name, pt_area_name,
-                    pt_ter_name, ball, ball100, ball12
-                ) = entry[(j * 7) + 2: (j * 7) + 9]
+                    pt_ter_name, ball, ball100, ball12,
+                    test_status
+                ) = entry[(j * 8) + 2: (j * 8) + 10]
                 if pt_name is None or ball is None:
                     continue
 
@@ -95,7 +97,8 @@ def transfer_exam_data(conn: connection):
                     raw_score=ball,
                     score=ball100,
                     school_score=ball12,
-                    year=year
+                    year=year,
+                    status=test_status
                 ))
 
         Exam.bulk_create(cursor, exams, exclude_id=True)
@@ -116,6 +119,7 @@ steps = [
             raw_score numeric(4, 1) not null,
             score numeric(4, 1) not null,
             school_score int,
+            status varchar(150),
             year int
         );
         """,
