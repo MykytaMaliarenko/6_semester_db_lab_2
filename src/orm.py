@@ -116,5 +116,5 @@ class AbstractModel:
 
         c.execute(
             f'insert into {cls.META.table_name} ({",".join(field_names)}) '
-            f'values {",".join(sql_models_values)};'
+            f'values {",".join(sql_models_values)} on conflict do nothing;'
         )

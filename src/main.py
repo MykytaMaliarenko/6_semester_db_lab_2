@@ -3,10 +3,11 @@ import logging
 import time
 import psycopg2
 import config as conf
+from functools import cache
+from models import Place, EducationalInstitution, Subject, Student, Exam
 from yoyo import read_migrations, get_backend
 from sql_utils import (
-    generate_bulk_insert_row_sql, generate_data_schema_from_entry,
-    generate_create_table_sql
+    extract_student, extract_exams
 )
 from consts import *
 
@@ -21,22 +22,96 @@ logging.basicConfig(
 )
 
 
-def parse_file(cursor, file, year: int):
-    def _do_insert():
-        cursor.execute(generate_bulk_insert_row_sql(bulk))
-        logging.info(f'successfully handled {len(bulk)} entries')
+def prettify_csv_line(raw_line: dict) -> dict:
+    return {
+        key.lower(): value if value != 'null' else None
+        for key, value in raw_line.items()
+    }
 
-    bulk = list()
+
+def parse_file(conn, cursor, file, year: int):
+    @cache
+    def get_subject_id(subject_code: str) -> int:
+        return Subject.get_from_db(cursor, code=subject_code).id
+
+    @cache
+    def get_or_create_place(
+            region_name: str,
+            area_name: str,
+            territory_name: str
+    ) -> int:
+        return Place.get_or_create(
+            cursor,
+            region_name,
+            area_name,
+            territory_name
+        ).id
+
+    @cache
+    def get_or_create_educational_institution(
+            name: str,
+            region_name: str,
+            area_name: str,
+            territory_name: str,
+            _type: t.Optional[str] = None,
+            parent_body_name: t.Optional[str] = None
+    ) -> t.Optional[int]:
+        if name is None:
+            return None
+
+        if ('. ' + territory_name) in area_name:
+            area_name = area_name[:area_name.index('. ' + territory_name)]
+            area_name = area_name.strip()
+
+        place = Place.get_or_create(
+            cursor,
+            region_name,
+            area_name,
+            territory_name
+        )
+
+        return EducationalInstitution.get_or_create(
+            cursor,
+            name=name,
+            place_id=place.id,
+            _type=_type,
+            parent_body_name=parent_body_name
+        ).id
+
+    def _do_insert():
+        Student.bulk_create(cursor, students)
+        logging.info(f'successfully handled {len(students)} students')
+        Exam.bulk_create(cursor, exams, exclude_id=True)
+        logging.info(f'successfully handled {len(exams)} exams')
+        conn.commit()
+
+    students = list()
+    exams = list()
     for index, line in enumerate(csv.DictReader(file, delimiter=';')):
         line.update({'year': str(year)})
-        bulk.append(line)
+        line = prettify_csv_line(line)
+
+        students.append(extract_student(
+            line,
+            get_or_create_place,
+            get_or_create_educational_institution
+        ))
+
+        exams += extract_exams(
+            line,
+            year,
+            get_or_create_educational_institution,
+            get_subject_id
+        )
 
         if (index + 1) % conf.BULK_UPLOAD_SIZE == 0:
             _do_insert()
-            bulk = []
+            students = []
+            exams = []
 
-    if len(bulk):
-        _do_insert()
+    if len(students) | len(exams):
+        students = []
+        exams = []
 
 
 def query_data(cursor, file_to_write: str):
@@ -60,26 +135,8 @@ def main():
         backend.apply_migrations(backend.to_apply(migrations))
     logging.info('migrations are successful')
 
-    file_to_generate_schema = conf.FILES_TO_PARSE[0]
-    with open(
-        file_to_generate_schema.path,
-        mode='r',
-        encoding=file_to_generate_schema.encoding
-    ) as infile:
-        line = next(csv.DictReader(infile, delimiter=';'))
-        fields_schema: t.Dict[str, t.Type] = {
-            **generate_data_schema_from_entry(line),
-            **SPECIAL_FIELDS_SCHEMA
-        }
-
-    logging.info(f'successfully generated fields_schema')
-
     conn = psycopg2.connect(**conf.DB_CONFIG)
     cursor = conn.cursor()
-
-    fields_schema.update(EXTRA_FIELDS)
-    cursor.execute(generate_create_table_sql(fields_schema))
-    conn.commit()
 
     for file_info in conf.FILES_TO_PARSE:
         start_time = time.time()
@@ -89,7 +146,7 @@ def main():
             mode='r',
             encoding=file_info.encoding
         ) as infile:
-            parse_file(cursor, infile, file_info.year)
+            parse_file(conn, cursor, infile, file_info.year)
             conn.commit()
 
         logging.info(

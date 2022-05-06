@@ -4,17 +4,98 @@ from consts import (
     PRIMAY_KEY, SQL_TYPE_BINDINGS,
     TABLE_NAME
 )
+from models import Student, Exam
+from consts import SubjectCodes
+
+
+GET_PLACE_FUNCTON_TYPE = t.Callable[[str, str, str], int]
+GET_EI_FUNCTON_TYPE = t.Callable[
+    [str, str, str, str, t.Optional[str], t.Optional[str]],
+    int
+]
+
+
+def extract_student(
+        entry: t.Dict,
+        get_place: t.Callable,
+        get_educational_institute: t.Callable
+) -> Student:
+    return Student(
+        id=entry['outid'],
+        gender=entry['sextypename'],
+        birth_year=int(entry['birth']),
+        studying_lang=entry['classlangname'],
+        place_of_living_id=get_place(
+            entry['regname'],
+            entry['areaname'],
+            entry['tername']
+        ),
+        educational_institution_id=get_educational_institute(
+            entry['eoname'],
+            entry['eoregname'],
+            entry['eoareaname'],
+            entry['eotername'],
+            entry['eotypename'],
+            entry['eoparent'],
+        ),
+        class_profile=entry['classprofilename']
+    )
+
+
+def extract_exams(
+        entry: t.Dict,
+        year: int,
+        get_educational_institute: t.Callable,
+        get_subject_id: t.Callable[[str], int],
+) -> list[Exam]:
+    parsed_exams = list()
+    for subject in SubjectCodes:
+        code = subject.value.lower()
+
+        pt_name = entry[f'{code}ptname']
+        pt_reg_name = entry[f'{code}ptregname']
+        pt_area_name = entry[f'{code}ptareaname']
+        pt_ter_name = entry[f'{code}pttername']
+        ball = entry[f'{code}ball']
+        ball100 = entry[f'{code}ball100']
+        ball12 = entry[f'{code}ball12']
+        test_status = entry[f'{code}teststatus']
+        if pt_name is None or ball is None:
+            continue
+
+        ei_id = get_educational_institute(
+            pt_name,
+            pt_reg_name,
+            pt_area_name,
+            pt_ter_name,
+            None,
+            None
+        )
+
+        parsed_exams.append(Exam(
+            id=None,
+            subject_id=get_subject_id(subject.value),
+            student_id=entry['outid'],
+            educational_institution_id=ei_id,
+            raw_score=_sql_repr_value(ball, float),
+            score=_sql_repr_value(ball100, float),
+            school_score=_sql_repr_value(ball12, int),
+            year=year,
+            status=test_status
+        ))
+
+    return parsed_exams
 
 
 def _sql_repr_value(v: str, expected_type: t.Type) -> str:
-    if v == 'null':
+    if v == 'null' or v is None:
         return v
 
     v = v.replace(',', '.').replace("'", "''")
     if expected_type == int:
-        return v
+        return int(v)
     elif expected_type == float:
-        return str(round(float(v), 1))
+        return round(float(v), 1)
     else:
         return f"'{v}'"
 
@@ -58,5 +139,5 @@ def generate_create_table_sql(fields: t.Dict[str, t.Type]) -> str:
         field_name = field.replace('"', '')
         return f'{field_name} {SQL_TYPE_BINDINGS[_type]}{is_primary_key}{is_nullable}'
 
-    sql_fields = ','.join([_generate_sql_field(field) for field in fields])
+    sql_fields = ',\n'.join([_generate_sql_field(field) for field in fields])
     return f'create table if not exists {TABLE_NAME} ({sql_fields});'

@@ -25,7 +25,7 @@ class Area(AbstractModel):
 @dataclass
 class Territory(AbstractModel):
     name: str
-    type: str
+    type: t.Optional[str]
 
     META = ModelMeta(
         table_name='territory'
@@ -51,8 +51,20 @@ class Place(AbstractModel):
         territory_name: str
     ) -> 'Place':
         region = Region.get_from_db(c, name=region_name)
+        if region is None:
+            region = Region(id=None, name=region_name).create(c)
+
         area = Area.get_from_db(c, name=area_name)
+        if area is None:
+            area = Area(id=None, name=area_name).create(c)
+
         territory = Territory.get_from_db(c, name=territory_name)
+        if territory is None:
+            territory = Territory(
+                id=None,
+                name=territory_name,
+                type=None
+            ).create(c)
 
         assert region is not None, \
             f'Region with name "{region_name}" doesnt exists'
