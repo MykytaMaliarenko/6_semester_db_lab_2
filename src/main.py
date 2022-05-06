@@ -120,7 +120,7 @@ def query_data(cursor, file_to_write: str):
 
     with open(file_to_write, mode='w') as file:
         write = csv.writer(file)
-        write.writerow(['Region', '2021 max score', '2019 max score'])
+        write.writerow(['Region', 'Year', 'Max Score'])
 
         for data in cursor.fetchall():
             write.writerow(data)
